@@ -44,5 +44,33 @@ export class CreateStaffDto {
   })
   @IsNotEmpty({message: 'La categoria es obligatoria'})
   @IsString({message: 'La categoria debe ser texto'})
-  category: string; 
+  category: string;
+  
+  @ApiPropertyOptional({
+    description: 'Numero de telefono',
+    example: '11-0123-4567'
+  })
+  @IsString({message: 'El numero de telefono debe ser texto'})
+  numberPhone: string;
+  
+  @ApiPropertyOptional({
+    description: 'Direccion del empleado',
+    example: 'Avenida Rivadavia 123'
+  })
+  @IsString({message: 'La direccion debe ser texto '})
+  adress: string;
+  
+  @ApiPropertyOptional({
+    description: 'Mail del empleado',
+    example: 'juanPerez451@gmail.com'
+  })
+  @IsString({message: 'La direccion de mail debe ser texto '})
+  email: string;
+  
+  @ApiPropertyOptional({
+    description: 'Antiguedad del empleado',
+    example: '4 Años'
+  })
+  @IsString({message: 'La antiguedad debe ser texto'})
+  seniority: string;   
 }

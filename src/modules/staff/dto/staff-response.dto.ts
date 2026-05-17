@@ -26,6 +26,22 @@ export class StaffResponseDto {
   @Expose()
   category: string;
 
+  @ApiPropertyOptional({description: 'Numero de telefono del empleado'})
+  @Expose()
+  numberPhone?: string;
+
+  @ApiPropertyOptional({description: 'Direccion del empleado'})
+  @Expose()
+  adress?: string;
+
+  @ApiPropertyOptional({description: 'Mail del empleado'})
+  @Expose()
+  email?: string;
+
+  @ApiPropertyOptional({description: 'Mail del empleado'})
+  @Expose()
+  seniority?: string;
+
   @ApiProperty({ description: 'Fecha de creación' })
   @Expose()
   createdAt: Date;

@@ -42,6 +42,42 @@ export class WorkRecordResponseDto {
   @Expose()
   hoursSunday: number;
 
+  @ApiPropertyOptional({ description: 'Pago por horas extras trabajadas el lunes' })
+  @Expose()
+  hoursMondayExtra: number;
+
+  @ApiPropertyOptional({ description: 'Pago por horas extras trabajadas el martes' })
+  @Expose()
+  hoursTuesdayExtra: number;
+
+  @ApiPropertyOptional({ description: 'Pago por horas extras trabajadas el miercoles' })
+  @Expose()
+  hoursWednesdayExtra: number;
+
+  @ApiPropertyOptional({ description: 'Pago por horas extras trabajadas el jueves' })
+  @Expose()
+  hoursThursdayExtra: number;
+
+  @ApiPropertyOptional({ description: 'Pago por horas extras trabajadas el viernes' })
+  @Expose()
+  hoursFridayExtra: number;
+
+  @ApiPropertyOptional({ description: 'Pago por horas extras trabajadas el sabado' })
+  @Expose()
+  hoursSaturdayExtra: number;
+
+  @ApiPropertyOptional({ description: 'Pago por horas extras trabajadas el domingo' })
+  @Expose()
+  hoursSundayExtra: number;
+
+  @ApiPropertyOptional({ description: 'Pago por horas extras trabajadas de la semana anterior' })
+  @Expose()
+  hoursLastWeek: number;
+
+  @ApiPropertyOptional({ description: 'Pago por horas extras trabajadas el viernes de la semana anterior' })
+  @Expose()
+  hoursFridayLastWeek: number;
+
   @ApiPropertyOptional({ description: 'Fecha de inicio del registro de trabajo' })
   @Expose()
   startDate: Date;

@@ -245,17 +245,6 @@ export class ProjectsController {
     return this.projectsService.updateProjectItem(projectId, structureId, quantity);
   }
 
-  @Patch(':id/assign-collaborator')
-  @Roles(UserRole.ADMIN, UserRole.SUBADMIN, UserRole.MANAGER)
-  @Auditory({ action: 'UPDATE', entity: 'Project' })
-  @ApiOperation({ summary: 'Asignar un colaborador a un proyecto (mantiene registros de costos)' })
-  async assignCollaborator(
-    @Param('id') id: string,
-    @Body('collaboratorId') collaboratorId: string,
-  ): Promise<ProjectResponseDto> {
-    return this.projectsService.assignCollaborator(id, collaboratorId);
-  }
-
   @Delete(':projectId/items/:structureId')
   @Roles(UserRole.ADMIN, UserRole.SUBADMIN)
   @Auditory({ action: 'DELETE', entity: 'ProjectItem' })

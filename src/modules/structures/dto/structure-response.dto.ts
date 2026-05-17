@@ -1,5 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Expose } from 'class-transformer';
+import { Expose, Type } from 'class-transformer';
+import { StructureCategoryResponseDto } from './structure-category-response.dto';
 
 export class StructureResponseDto {
     @ApiProperty({ description: 'ID de la estructura' })
@@ -10,25 +11,30 @@ export class StructureResponseDto {
     @Expose()
     name: string;
 
-    @ApiProperty({ description: 'Categoría de la estructura' })
+    @ApiProperty({ description: 'ID de la categoría de la estructura' })
     @Expose()
-    category: string;
+    categoryId: string;
 
-    @ApiProperty({description:'Stock disponible de la estructura'})
+    @ApiProperty({ description: 'Categoría de la estructura', type: () => StructureCategoryResponseDto })
+    @Expose()
+    @Type(() => StructureCategoryResponseDto)
+    category: StructureCategoryResponseDto;
+
+    @ApiProperty({ description: 'Stock disponible de la estructura' })
     @Expose()
     stock: number;
 
-    @ApiPropertyOptional({description:'Medida de la estructura'})
+    @ApiPropertyOptional({ description: 'Medida de la estructura' })
     @Expose()
     measure?: string;
 
-    @ApiPropertyOptional({description:'Descripción de la estructura'})
+    @ApiPropertyOptional({ description: 'Descripción de la estructura' })
     @Expose()
     description?: string;
 
     @ApiProperty({ description: 'Cantidad en uso de la estructura' })
     @Expose()
-    inUse: number;   
+    inUse: number;
 
     @ApiProperty({ description: 'Cantidad disponible de la estructura' })
     @Expose()

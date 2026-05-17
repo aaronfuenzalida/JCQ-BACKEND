@@ -1,10 +1,11 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsNotEmpty, IsNumber, IsString, IsUUID, IsOptional, IsInt, Min, IsDateString, IsArray, ValidateNested} from 'class-validator';
+import { IsNotEmpty, IsNumber, IsString, IsUUID, IsOptional, IsInt, Min, IsDateString, IsArray, ValidateNested, IsBoolean, ValidateIf } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ProjectStructureDto } from './project-structure.dto';
+import { AssignCollaboratorDto } from './assign-collaborator.dto';
 
 export class CreateProjectDto {
-  @ApiProperty({ 
+  @ApiProperty({
     description: 'Monto total del proyecto',
     example: 500000.50
   })
@@ -14,7 +15,7 @@ export class CreateProjectDto {
   @Type(() => Number)
   amount: number;
 
-  @ApiProperty({ 
+  @ApiProperty({
     description: 'ID del cliente',
     example: 'uuid-del-cliente'
   })
@@ -22,7 +23,7 @@ export class CreateProjectDto {
   @IsNotEmpty({ message: 'Cliente es requerido' })
   clientId: string;
 
-  @ApiPropertyOptional({ 
+  @ApiPropertyOptional({
     description: 'Dirección del proyecto',
     example: 'Av. Corrientes 1234, Buenos Aires'
   })
@@ -30,7 +31,7 @@ export class CreateProjectDto {
   @IsOptional()
   locationAddress?: string;
 
-  @ApiPropertyOptional({ 
+  @ApiPropertyOptional({
     description: 'Latitud de la ubicación (para Google Maps/Leaflet)',
     example: -34.603722
   })
@@ -39,7 +40,7 @@ export class CreateProjectDto {
   @Type(() => Number)
   locationLat?: number;
 
-  @ApiPropertyOptional({ 
+  @ApiPropertyOptional({
     description: 'Longitud de la ubicación (para Google Maps/Leaflet)',
     example: -58.381592
   })
@@ -48,7 +49,7 @@ export class CreateProjectDto {
   @Type(() => Number)
   locationLng?: number;
 
-  @ApiProperty({ 
+  @ApiProperty({
     description: 'Cantidad de trabajadores necesarios',
     example: 15
   })
@@ -58,7 +59,7 @@ export class CreateProjectDto {
   @Type(() => Number)
   workers: number;
 
-  @ApiProperty({ 
+  @ApiProperty({
     description: 'Fecha de inicio del proyecto',
     example: '2025-01-15T10:00:00Z'
   })
@@ -66,7 +67,7 @@ export class CreateProjectDto {
   @IsNotEmpty({ message: 'Fecha de inicio es requerida' })
   dateInit: string;
 
-  @ApiProperty({ 
+  @ApiProperty({
     description: 'Fecha de finalización del proyecto',
     example: '2025-03-15T10:00:00Z'
   })
@@ -74,7 +75,7 @@ export class CreateProjectDto {
   @IsNotEmpty({ message: 'Fecha de finalización es requerida' })
   dateEnd: string;
 
-  @ApiPropertyOptional({ 
+  @ApiPropertyOptional({
     description: 'Evento relacionado al proyecto',
     example: 'Construcción de edificio residencial'
   })
@@ -89,21 +90,32 @@ export class CreateProjectDto {
   @Type(() => ProjectStructureDto)
   structures?: ProjectStructureDto[];
 
-  @ApiPropertyOptional({ 
-    description: 'ID del colaborador externo',
-    example: 'uuid-del-colaborador'
+  @ApiPropertyOptional({
+    type: [AssignCollaboratorDto],
+    description: 'Lista de colaboradores asignados al proyecto'
   })
-  @IsUUID('4', { message: 'ID de colaborador inválido' })
   @IsOptional()
-  collaboratorId?: string;
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => AssignCollaboratorDto)
+  collaborators?: AssignCollaboratorDto[];
 
-  @ApiPropertyOptional({ 
-    description: 'Cantidad de personal externo pactado',
-    example: 5
+  @ApiProperty({
+    description: 'Indica si el proyecto está cotizado en dólares',
+    example: false,
+    default: false
   })
-  @IsInt({ message: 'La cantidad de personal externo debe ser un número entero' })
+  @IsBoolean()
   @IsOptional()
-  @Type(() => Number)
-  collabWorkersCount?: number;
+  hasUSD?: boolean;
+
+  @ApiPropertyOptional({
+    description: 'Valor del dólar utilizado para la cotización',
+    example: 1100.50
+  })
+  @ValidateIf(o => o.hasUSD === true)
+  @IsNumber({}, { message: 'Valor del dólar debe ser un número' })
+  @Min(0, { message: 'Valor del dólar debe ser mayor o igual a 0' })
+  usdValue?: number;
+
 }
-

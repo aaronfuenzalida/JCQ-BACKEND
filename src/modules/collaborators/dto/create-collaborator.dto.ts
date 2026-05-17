@@ -63,4 +63,11 @@ export class CreateCollaboratorDTO{
     @IsNotEmpty({message:'El precio por hora de los empleados es obligatorio'})
     valuePerHour : number
 
+    @ApiPropertyOptional({
+        description: 'Descripcion para el colaborador'
+    })
+    @IsOptional()
+    @IsString({message: 'La descripcion debe ser texto'})
+    notes?: string
+
 }

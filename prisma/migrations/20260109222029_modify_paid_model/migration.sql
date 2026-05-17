@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "paids" ADD COLUMN     "amountUSD" DOUBLE PRECISION,
+ADD COLUMN     "hasUSD" BOOLEAN NOT NULL DEFAULT false;

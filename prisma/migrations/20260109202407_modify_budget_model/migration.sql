@@ -1,0 +1,4 @@
+-- AlterTable
+ALTER TABLE "budgets" ADD COLUMN     "hasUSD" BOOLEAN NOT NULL DEFAULT false,
+ADD COLUMN     "totalAmountUSD" DOUBLE PRECISION,
+ADD COLUMN     "usdValue" DOUBLE PRECISION;

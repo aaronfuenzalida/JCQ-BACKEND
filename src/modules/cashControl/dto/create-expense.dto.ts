@@ -1,5 +1,5 @@
 import { ApiProperty} from '@nestjs/swagger';
-import { Min,IsUUID, IsNumber, IsString,IsDateString,IsNotEmpty } from 'class-validator';
+import { Min,IsUUID, IsNumber, IsString,IsDateString,IsNotEmpty, IsOptional} from 'class-validator';
 import { Transform } from 'class-transformer';
 
 export class CreateExpenseDTO{
@@ -34,5 +34,10 @@ export class CreateExpenseDTO{
     @IsUUID()
     @IsNotEmpty({message:'El gasto debe tener una categoria asignada'})
     categoryId: string;
+
+    @IsOptional()
+    @IsString()
+    @IsUUID()
+    workRecordId?: string;
 
 }

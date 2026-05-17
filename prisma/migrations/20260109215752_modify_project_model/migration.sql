@@ -1,0 +1,4 @@
+-- AlterTable
+ALTER TABLE "projects" ADD COLUMN     "amountUSD" DOUBLE PRECISION,
+ADD COLUMN     "hasUSD" BOOLEAN NOT NULL DEFAULT false,
+ADD COLUMN     "usdValue" DOUBLE PRECISION;

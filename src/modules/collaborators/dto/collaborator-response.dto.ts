@@ -39,6 +39,10 @@ export class CollaboratorResponseDTO{
   @Expose()
   valuePerHour : number
 
+  @ApiPropertyOptional({ description: 'Descripcion del colaborador' })
+  @Expose()
+  notes? : string
+
   @ApiProperty({ description: 'Fecha de creación' })
   @Expose()
   createdAt: Date;

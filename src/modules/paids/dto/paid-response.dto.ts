@@ -40,6 +40,18 @@ export class PaidResponseDto {
   @Expose()
   updatedAt: Date;
 
+  @ApiProperty({ description: 'Indica si el pago fue en dólares' })
+  @Expose()
+  hasUSD: boolean;
+
+  @ApiPropertyOptional({ description: 'Valor del dólar utilizado' })
+  @Expose()
+  usdValue?: number;
+
+  @ApiPropertyOptional({ description: 'Monto del pago en USD' })
+  @Expose()
+  amountUSD?: number;
+
   @ApiPropertyOptional({ description: 'Fecha de eliminación' })
   @Expose()
   deletedAt?: Date;

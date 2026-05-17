@@ -11,7 +11,7 @@ export class PaidsService {
   private readonly NUMBER_PREFIX = '001';
   private readonly NUMBER_PADDING = 5; // 00001, 00002, etc.
 
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
   /**
    * Genera el siguiente número secuencial para un pago
@@ -90,11 +90,14 @@ export class PaidsService {
   }
 
   async create(createPaidDto: CreatePaidDto): Promise<PaidResponseDto> {
+    // Extraer campos USD
+    const { hasUSD, usdValue, amountUSD, ...paidData } = createPaidDto;
+
     // Validar que el proyecto existe
     const project = await this.prisma.project.findFirst({
-      where: { 
+      where: {
         id: createPaidDto.projectId,
-        deletedAt: null 
+        deletedAt: null
       },
     });
 
@@ -114,9 +117,12 @@ export class PaidsService {
 
     const paid = await this.prisma.paid.create({
       data: {
-        ...createPaidDto,
+        ...paidData,
         number,
         date: new Date(createPaidDto.date),
+        hasUSD: hasUSD || false,
+        usdValue: hasUSD ? usdValue : null,
+        amountUSD: hasUSD ? amountUSD : null,
       },
       include: {
         project: true,
@@ -168,9 +174,9 @@ export class PaidsService {
 
   async findOne(id: string): Promise<PaidResponseDto> {
     const paid = await this.prisma.paid.findFirst({
-      where: { 
+      where: {
         id,
-        deletedAt: null 
+        deletedAt: null
       },
       include: { project: { include: { client: true } } },
     });
@@ -184,9 +190,9 @@ export class PaidsService {
 
   async findByProject(projectId: string): Promise<PaidResponseDto[]> {
     const paids = await this.prisma.paid.findMany({
-      where: { 
+      where: {
         projectId,
-        deletedAt: null 
+        deletedAt: null
       },
       orderBy: { date: 'desc' },
     });
@@ -196,9 +202,9 @@ export class PaidsService {
 
   async update(id: string, updatePaidDto: UpdatePaidDto): Promise<PaidResponseDto> {
     const paid = await this.prisma.paid.findFirst({
-      where: { 
+      where: {
         id,
-        deletedAt: null 
+        deletedAt: null
       },
       include: { project: true },
     });
@@ -221,7 +227,7 @@ export class PaidsService {
     }
 
     const dataToUpdate: any = { ...updatePaidDto };
-    
+
     if (updatePaidDto.date) {
       dataToUpdate.date = new Date(updatePaidDto.date);
     }
@@ -240,9 +246,9 @@ export class PaidsService {
 
   async remove(id: string): Promise<{ message: string }> {
     const paid = await this.prisma.paid.findFirst({
-      where: { 
+      where: {
         id,
-        deletedAt: null 
+        deletedAt: null
       },
     });
 

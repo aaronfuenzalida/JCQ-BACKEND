@@ -1,9 +1,9 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Expose, Type, Transform } from 'class-transformer'; 
+import { Expose, Type, Transform } from 'class-transformer';
 import { ClientResponseDto } from '~/modules/clients/dto';
 import { ProjectStatus } from '@prisma/client';
 import { ProjectItemResponseDto } from '~/modules/structures/dto';
-import { CollaboratorResponseDTO } from '~/modules/collaborators/dto';
+import { ProjectCollaboratorResponseDto } from './project-collaborator-response.dto';
 
 export class ProjectResponseDto {
   @ApiProperty({ description: 'ID del proyecto' })
@@ -69,29 +69,16 @@ export class ProjectResponseDto {
 
   @ApiProperty({ description: 'Alias de items para el frontend', type: [ProjectItemResponseDto] })
   @Expose()
-  @Transform(({ obj }) => obj.items || []) 
+  @Transform(({ obj }) => obj.items || [])
   structures: ProjectItemResponseDto[];
 
-  @ApiPropertyOptional({ description: 'ID del colaborador asignado' })
+  @ApiProperty({
+    description: 'Lista de colaboradores asignados',
+    type: [ProjectCollaboratorResponseDto]
+  })
   @Expose()
-  collaboratorId?: string;
-
-  @ApiPropertyOptional({ description: 'Datos del colaborador (Relación)' })
-  @Expose()
-  @Type(() => CollaboratorResponseDTO) 
-  collaborator?: CollaboratorResponseDTO;
-
-  @ApiPropertyOptional({ description: 'Nombre/Razón Social del colaborador al momento del acuerdo' })
-  @Expose()
-  collabDisplayName?: string;
-
-  @ApiPropertyOptional({ description: 'Costo por hora pactado' })
-  @Expose()
-  collabValuePerHour?: number;
-
-  @ApiPropertyOptional({ description: 'Cantidad de personal externo pactado' })
-  @Expose()
-  collabWorkersCount?: number;
+  @Type(() => ProjectCollaboratorResponseDto)
+  collaborators: ProjectCollaboratorResponseDto[];
 
   @ApiProperty({ description: 'Fecha de creación' })
   @Expose()
@@ -100,6 +87,18 @@ export class ProjectResponseDto {
   @ApiProperty({ description: 'Fecha de actualización' })
   @Expose()
   updatedAt: Date;
+
+  @ApiProperty({ description: 'Indica si el proyecto está cotizado en dólares' })
+  @Expose()
+  hasUSD: boolean;
+
+  @ApiPropertyOptional({ description: 'Valor del dólar utilizado' })
+  @Expose()
+  usdValue?: number;
+
+  @ApiPropertyOptional({ description: 'Monto total en USD' })
+  @Expose()
+  amountUSD?: number;
 
   @ApiPropertyOptional({ description: 'Fecha de eliminación' })
   @Expose()

@@ -88,24 +88,34 @@ export class CashControlService{
   }
 
   // Crear gasto
-  async createExpense(createExpenseDto: CreateExpenseDTO): Promise<ExpenseResponseDTO> {
-    if (!createExpenseDto.categoryId) {
-        throw new BadRequestException('El gasto debe tener una categoría asignada');
-    }
-    const expense = await this.prisma.expense.create({
-      data: {
-        description: createExpenseDto.description,
-        amount: createExpenseDto.amount,
-        date: new Date(createExpenseDto.date),
-        categoryId: createExpenseDto.categoryId 
-      },
-      include: {
-        category: true
-      }
-    });
-
-    return plainToInstance(ExpenseResponseDTO, expense, { excludeExtraneousValues: true });
+    async createExpense(createExpenseDto: CreateExpenseDTO): Promise<ExpenseResponseDTO> {
+  if (!createExpenseDto.categoryId) {
+      throw new BadRequestException('El gasto debe tener una categoría asignada');
   }
+  // Verificar si viene un WorkRecord y si es valido 
+  if (createExpenseDto.workRecordId) {
+     const record = await this.prisma.workRecord.findUnique({ 
+        where: { id: createExpenseDto.workRecordId } 
+     });
+     if (!record) throw new NotFoundException('La planilla de horas indicada no existe');
+  }
+
+  const expense = await this.prisma.expense.create({
+    data: {
+      description: createExpenseDto.description,
+      amount: createExpenseDto.amount,
+      date: new Date(createExpenseDto.date),
+      categoryId: createExpenseDto.categoryId,
+      workRecordId: createExpenseDto.workRecordId 
+    },
+    include: {
+      category: true,
+      workRecord: { include: { staff: true } } // Para devolver info del empleado si es necesario
+    }
+  });
+
+  return plainToInstance(ExpenseResponseDTO, expense, { excludeExtraneousValues: true });
+}
 
     //Obtener gastos
   async getAllExpenses(filters: FilterExpenseDTO = {}): Promise<ExpenseResponseDTO[]>{
@@ -113,7 +123,8 @@ export class CashControlService{
 
     const expenses = await this.prisma.expense.findMany({
         where,
-        orderBy: {createdAt: 'desc'}
+        orderBy:[ { date: 'desc' }, {createdAt: 'desc'} ],
+        include: { category: true }
     });
 
     return plainToInstance (ExpenseResponseDTO,expenses,{ excludeExtraneousValues: true })
@@ -195,7 +206,8 @@ export class CashControlService{
             where,
             skip,
             take: limit,
-            orderBy: { createdAt: 'desc' },
+            orderBy: [ { date:'desc' }, { createdAt: 'desc' }],
+            include: { category: true }
           }),
           this.prisma.expense.count({ where }),
         ]);
@@ -240,6 +252,7 @@ export class CashControlService{
     where: { id: expenseId },
       data: {
         deletedAt: DateTime.now().setZone('America/Argentina/Buenos_Aires').toJSDate(),
+        workRecordId: null
       },
     });
     return {message:'Gasto eliminado exitosamente'};

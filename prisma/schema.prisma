@@ -94,12 +94,7 @@ model Project {
   event       String?        // Evento relacionado al proyecto
   items       ProjectItem[]
   
-  collaboratorId  String?
-  collaborator    Collaborator?  @relation(fields: [collaboratorId], references: [id], onDelete: Restrict)
-
-  collabWorkersCount Int?        // Cuántos empleados aportó específicamente aca
-  collabValuePerHour Float?      // Cuánto se acordó pagar por hora en este proyecto
-  collabDisplayName   String?
+  collaborators ProjectCollaborator[]
 
   clientId    String
   client      Client         @relation(fields: [clientId], references: [id], onDelete: Restrict)
@@ -114,6 +109,11 @@ model Project {
   dateEnd     DateTime       // Fecha de finalización del proyecto
   
   paids       Paid[]         // Pagos realizados
+  dispatches  Dispatch[]     // Remitos de despacho
+
+  hasUSD      Boolean        @default(false)  // Si el proyecto está cotizado en USD
+  usdValue    Float?         // Valor del dólar utilizado
+  amountUSD   Float?         // Monto total en USD
   
   createdAt   DateTime       @default(now())
   updatedAt   DateTime       @updatedAt
@@ -135,6 +135,10 @@ model Paid {
   
   projectId   String
   project     Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  hasUSD      Boolean        @default(false)  // Si el pago está cotizado en USD
+  usdValue    Float?         // Valor del dólar al momento del pago
+  amountUSD   Float?         // Monto total en USD
   
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
@@ -153,6 +157,10 @@ model Staff{
   dni       String?   // DNI - uno de los dos debe ser obligatorio (validar en DTO) 
   cuit      String?   // CUIT sin formato, solo números o string
   category  String    // Categoría del personal 
+  numberPhone String?
+  adress      String?
+  email       String?
+  seniority   String?
 
   workRecords  WorkRecord[]
   
@@ -164,10 +172,10 @@ model Staff{
 model WorkRecord {
   id             String    @id @default(uuid())
   
-  valuePerHour   Float     // "Valor por Hora"
   advance        Float     // "Adelanto"
-  total          Float     // Total = (Horas Totales X Valor por Hora) - Adelanto
+  total          Float     // Total = Suma de lo pagado por las horas - Adelanto
   
+  //HOURSDAY basicamente es el monto que se le paga el empleado ese dia, mas no las horas trabajadas (En un principio era Hours * ValuePerHour)
   hoursMonday    Float
   hoursTuesday   Float
   hoursWednesday Float
@@ -175,9 +183,26 @@ model WorkRecord {
   hoursFriday    Float
   hoursSaturday  Float  /// Luego borrar registros viejos para sacar este campo como Opcional y que pase a ser obligatorio
   hoursSunday    Float
+
+  //Horas extras que se pagan 
+  hoursMondayExtra    Float
+  hoursTuesdayExtra   Float
+  hoursWednesdayExtra Float
+  hoursThursdayExtra  Float
+  hoursFridayExtra    Float
+  hoursSaturdayExtra  Float  /// Luego borrar registros viejos para sacar este campo como Opcional y que pase a ser obligatorio
+  hoursSundayExtra    Float
+
+  //Campo viernesExtra semana pasada 
+  hoursFridayLastWeek Float?
+
+  //Horas extras que hacen el sabado o viernes, se lo pagan en la proxima liquidacion, por ende se agrega un campo mas
+  hoursLastWeek       Float
   
   staffId        String
   staff          Staff     @relation(fields: [staffId], references: [id])
+
+  expense     Expense?
   
   startDate      DateTime // Por ejemplo, el lunes de la semana
   endDate        DateTime // Por ejemplo, el viernes o domingo de la semana. Sirve por si quiere la liquidacion de un mes completo en algun momento
@@ -187,10 +212,25 @@ model WorkRecord {
   deletedAt DateTime?
 }
 
-model Structure{
+model StructureCategory {
+  id          String    @id @default(uuid())
+  name        String
+  description String?
+
+  structures  Structure[]
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+
+  @@map("structure_categories")
+}
+
+model Structure {
   id             String    @id @default(uuid())
   name           String 
-  category       StructureCategory
+  categoryId     String
+  category       StructureCategory @relation(fields: [categoryId], references: [id])
   stock          Float      //STOCK DISPONIBLE
   measure        String?    //Ej: "1,85x1M", "6,40mts", "30x30cm"
   description    String?    //Descripcion de la estructura
@@ -200,12 +240,15 @@ model Structure{
 
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
-  deletedAt DateTime? 
+  deletedAt DateTime?
+
+  @@index([categoryId])
 }
 
 model ProjectItem {
   id          String    @id @default(uuid())
   quantity    Int       // Cantidad asignada a este proyecto específico
+  dispatchedQuantity Int @default(0) // Cantidad ya despachada
   
   projectId   String
   project     Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
@@ -213,17 +256,15 @@ model ProjectItem {
   structureId String
   structure   Structure @relation(fields: [structureId], references: [id])
 
+  dispatchItems  DispatchItem[]
+
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
   @@unique([projectId, structureId])
 }
 
-enum StructureCategory {
-  CATEGORY_A
-  CATEGORY_B
-  CATEGORY_C
-}
+
 
 model Budget {
   id             String    @id @default(uuid())
@@ -237,6 +278,7 @@ model Budget {
   manualClientCuit String? 
   
   items          BudgetItem[]
+  descriptionItems BudgetDescriptionItem[]
 
   netAmount      Float     // Valor neto (Suma de items * precio)
   
@@ -247,6 +289,10 @@ model Budget {
   hasIibb        Boolean   @default(false)
   iibbPercentage Float?    // 1, 2, 3, 4, 5 (Se guarda el % seleccionado)
   iibbValue      Float?    // El valor monetario calculado de IIBB
+
+  hasUSD         Boolean   @default(false)
+  usdValue       Float?    // El valor monetario de USD
+  totalAmountUSD Float?    // El valor monetario total en USD
 
   totalAmount    Float     // Total Final = netAmount + iva + iibb
 
@@ -277,13 +323,32 @@ model BudgetItem {
   @@map("budget_items")
 }
 
+model BudgetDescriptionItem {
+  id             String    @id @default(uuid())
+  
+  title          String
+  quantity       Int       @default(1) // Cantidad (opcional, por defecto 1 si no se usa)
+  price          Float     // Precio unitario
+  unit           String?   // Unidad (e.g. "Por hora", "Global", "m2") -> Opcional
+  
+  budgetId       String
+  budget         Budget    @relation(fields: [budgetId], references: [id], onDelete: Cascade)
+
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  deletedAt      DateTime?
+
+  @@map("budget_description_items")
+}
+
 model Collaborator{                               //VALIDACIONES MUY IMPORTANTES EN DTO
   id             String    @id @default(uuid())
   
   firstName      String?
   lastName       String?
+  notes          String?
 
-  Projects       Project[]      //VAN A PODER SER ASIGNADOS UNA VEZ SE CREE PRIMERO EL COLABORADOR
+  projects       ProjectCollaborator[]
 
   companyName    String? ///Razon social
   dni            String?
@@ -297,6 +362,28 @@ model Collaborator{                               //VALIDACIONES MUY IMPORTANTES
   deletedAt      DateTime?
 
   @@map("collaborators")
+}
+
+model ProjectCollaborator {
+  id             String        @id @default(uuid())
+  
+  projectId      String
+  project        Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  
+  collaboratorId String
+  collaborator   Collaborator  @relation(fields: [collaboratorId], references: [id])
+
+  workersCount   Int           // Cantidad de empleados asignados para este proyecto
+  hoursCount     Float         // Cantidad de horas estimadas/necesarias
+  valuePerHour   Float         // Snapshot: Precio por hora pactado en el momento de la asignación
+  
+  totalCost      Float         
+
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  @@unique([projectId, collaboratorId]) // Para evitar duplicar el mismo colaborador en el mismo proyecto
+  @@map("project_collaborators")
 }
 
 model ExpenseCategory{
@@ -320,8 +407,53 @@ model Expense{
   categoryId          String
   category            ExpenseCategory @relation(fields: [categoryId], references: [id])
 
+  workRecordId      String?  @unique // Opcional: Relacion 1 a 1 con la planilla
+  workRecord        WorkRecord? @relation(fields: [workRecordId], references: [id])
+
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
   deletedAt      DateTime?
+}
+
+model Dispatch{
+  id                  String    @id @default(uuid())
+  dispatchNumber      Int       @unique @default(autoincrement())   // Para pdf principalmente
+  
+  projectId           String
+  project             Project   @relation(fields: [projectId], references: [id])
+  
+  firstName           String
+  lastName            String
+  cuit                String
+  licensePlate        String
+  notes               String?
+
+  items               DispatchItem[]
+
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  deletedAt      DateTime?
+
+  @@index([projectId])
+  @@map("dispatches")
+}
+
+model DispatchItem {
+  id          String    @id @default(uuid())
+  
+  quantity    Float       // CANTIDAD DE ESTA ESTRUCTURA QUE SE ENVIAN
+  
+  dispatchId  String
+  dispatch    Dispatch  @relation(fields: [dispatchId], references: [id], onDelete: Cascade)
+  
+  projectItemId String
+  projectItem   ProjectItem @relation(fields: [projectItemId], references: [id])
+
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  deletedAt      DateTime?
+  
+  @@unique([dispatchId, projectItemId])
+  @@map("dispatch_items")
 }
 

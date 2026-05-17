@@ -1,9 +1,9 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsNotEmpty, IsNumber, IsUUID, IsDateString, Min, IsString, IsOptional } from 'class-validator';
+import { IsNotEmpty, IsNumber, IsUUID, IsDateString, Min, IsString, IsOptional, IsBoolean, ValidateIf } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class CreatePaidDto {
-  @ApiProperty({ 
+  @ApiProperty({
     description: 'Monto del pago',
     example: 50000.00
   })
@@ -13,7 +13,7 @@ export class CreatePaidDto {
   @Type(() => Number)
   amount: number;
 
-  @ApiProperty({ 
+  @ApiProperty({
     description: 'Fecha del pago',
     example: '2025-02-15T10:00:00Z'
   })
@@ -21,7 +21,7 @@ export class CreatePaidDto {
   @IsNotEmpty({ message: 'Fecha es requerida' })
   date: string;
 
-  @ApiPropertyOptional({ 
+  @ApiPropertyOptional({
     description: 'Código de factura relacionada',
     example: 'FC-2025-001'
   })
@@ -29,12 +29,40 @@ export class CreatePaidDto {
   @IsOptional()
   bill?: string;
 
-  @ApiProperty({ 
+  @ApiProperty({
     description: 'ID del proyecto',
     example: 'uuid-del-proyecto'
   })
   @IsUUID('4', { message: 'ID de proyecto inválido' })
   @IsNotEmpty({ message: 'Proyecto es requerido' })
   projectId: string;
-}
 
+  @ApiPropertyOptional({
+    description: 'Indica si el pago fue realizado en dólares',
+    example: false,
+    default: false
+  })
+  @IsBoolean()
+  @IsOptional()
+  hasUSD?: boolean;
+
+  @ApiPropertyOptional({
+    description: 'Valor del dólar utilizado para la cotización',
+    example: 1100.50
+  })
+  @ValidateIf(o => o.hasUSD === true)
+  @IsNumber({}, { message: 'Valor del dólar debe ser un número' })
+  @Min(0.01, { message: 'Valor del dólar debe ser mayor a 0' })
+  @IsOptional()
+  usdValue?: number;
+
+  @ApiPropertyOptional({
+    description: 'Monto del pago en USD (si aplica)',
+    example: 50.00
+  })
+  @ValidateIf(o => o.hasUSD === true)
+  @IsNumber({}, { message: 'Monto USD debe ser un número' })
+  @Min(0.01, { message: 'Monto USD debe ser mayor a 0' })
+  @IsOptional()
+  amountUSD?: number;
+}
